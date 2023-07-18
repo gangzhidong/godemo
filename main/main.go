@@ -2,19 +2,16 @@ package main
 
 import (
 	"crypto/sha1"
-	"errors"
 	"fmt"
 	"io"
 	"math/rand"
 	"net"
 	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 	"time"
 
+	"github.com/blacknon/go-sshlib"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 
@@ -23,6 +20,8 @@ var (
 	port = "22"
 	user = "root"
 	pass = "root"
+	password = "root"
+	termlog = "./test_termlog"
 
 	characterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 )
@@ -91,105 +90,38 @@ func RandomString(n int) string {
 }
 
 func main() {
-	// Create sshClientConfig
-	sshConfig := &ssh.ClientConfig{
-		User: user,
-		Auth: []ssh.AuthMethod{
-			ssh.Password(pass),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
+    // Create sshlib.Connect
+    con := &sshlib.Connect{
+        // If you use x11 forwarding, please set to true.
+        ForwardX11: true,
 
-	// SSH connect.
-	client, err := ssh.Dial("tcp", host+":"+port, sshConfig)
+        // If you use ssh-agent forwarding, please set to true.
+        // And after, run `con.ConnectSshAgent()`.
+        ForwardAgent: true,
+    }
 
-	// Create Session
-	session, err := client.NewSession()
-	defer session.Close()
+    // Create ssh.AuthMethod
+    authMethod := sshlib.CreateAuthMethodPassword(password)
 
-	// NOTE:
-	// x11-req指定有效负载
-	payload := x11request{
-		SingleConnection: false,
-		AuthProtocol:     string("MIT-MAGIC-COOKIE-1"),
-		AuthCookie:       string(NewSHA1Hash()),
-		ScreenNumber:     uint32(0),
-	}
+    // If you use ssh-agent forwarding, uncomment it.
+    // con.ConnectSshAgent()
 
-	// Send x11-req Request
-	ok, err := session.SendRequest("x11-req", true, ssh.Marshal(payload))
-	if err == nil && !ok {
-		fmt.Println(errors.New("ssh: x11-req failed"))
-	} else {
-		// Open HandleChannel x11
-		x11channels := client.HandleChannelOpen("x11")
+    // Connect ssh server
+    err := con.CreateClient(host, port, user, []ssh.AuthMethod{authMethod})
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
 
-		go func() {
-			for ch := range x11channels {
-				channel, _, err := ch.Accept()
-				if err != nil {
-					continue
-				}
-
-				go forwardX11Socket(channel)
-			}
-		}()
-	}
-
-	// 将按键输入转换为连接目标可以识别的格式（这里是按键）
-	fd := int(os.Stdin.Fd())
-	state, err := terminal.MakeRaw(fd)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer terminal.Restore(fd, state)
-
-	// 获取终端尺寸
-	w, h, err := terminal.GetSize(fd)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	modes := ssh.TerminalModes{
-		ssh.ECHO:          1,
-		ssh.TTY_OP_ISPEED: 14400,
-		ssh.TTY_OP_OSPEED: 14400,
-	}
-
-	err = session.RequestPty("xterm", h, w, modes)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	session.Stdout = os.Stdout
-	session.Stderr = os.Stderr
-	session.Stdin = os.Stdin
-
-	// Shell启动
-	err = session.Shell()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	// 终端尺寸变化检测和处理
-	signal_chan := make(chan os.Signal, 1)
-	signal.Notify(signal_chan, syscall.SIGWINCH)
-	// signal.Notify(signal_chan, syscall.SIGTERM)
-	go func() {
-		for {
-			s := <-signal_chan
-			switch s {
-			case syscall.SIGWINCH:
-			// case syscall.SIGTERM:
-				fd := int(os.Stdout.Fd())
-				w, h, _ = terminal.GetSize(fd)
-				session.WindowChange(h, w)
-			}
-		}
-	}()
-	session.Run("xclock")
-	err = session.Wait()
-	if err != nil {
-		fmt.Println(err)
-	}
+    // Set terminal log
+    con.SetLog(termlog, false)
+    // Create Session
+    session, err := con.CreateSession()
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
+    // // Start ssh shell
+    // con.Shell(session)
+	session.CombinedOutput("xclock")
 }

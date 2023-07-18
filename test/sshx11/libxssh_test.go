@@ -46,15 +46,13 @@ func TestSshLib (t *testing.T) {
 
     // Set terminal log
     con.SetLog(termlog, false)
-
     // Create Session
     session, err := con.CreateSession()
     if err != nil {
         fmt.Println(err)
         os.Exit(1)
     }
-
-    // Start ssh shell
-    con.Shell(session)
+    // // Start ssh shell
+    // con.Shell(session)
 	session.CombinedOutput("xclock")
 }
