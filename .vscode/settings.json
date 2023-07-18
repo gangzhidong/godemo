@@ -1,0 +1,10 @@
+{
+    "[go]": {
+        "editor.suggest.showKeywords": false
+    },
+    "go.testTimeout": "300s",
+    "go.testEnvVars": {
+        
+        "bench":"BenchmarkSplitParallel"
+    }
+}

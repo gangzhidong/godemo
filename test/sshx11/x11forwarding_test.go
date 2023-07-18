@@ -1,4 +1,4 @@
-package main
+package ssh_test
 
 import (
 	"crypto/sha1"
@@ -11,17 +11,17 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"testing"
 	"time"
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-
 var (
-	host = "192.168.1.202"
-	port = "22"
-	user = "root"
+	// host = "targethost"
+	// port = "22"
+	// user = "user"
 	pass = "root"
 
 	characterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
@@ -90,7 +90,7 @@ func RandomString(n int) string {
 	return string(b)
 }
 
-func main() {
+func TestSshx11 (t *testing.T) {
 	// Create sshClientConfig
 	sshConfig := &ssh.ClientConfig{
 		User: user,
@@ -173,14 +173,14 @@ func main() {
 
 	// 终端尺寸变化检测和处理
 	signal_chan := make(chan os.Signal, 1)
-	signal.Notify(signal_chan, syscall.SIGWINCH)
-	// signal.Notify(signal_chan, syscall.SIGTERM)
+	// signal.Notify(signal_chan, syscall.SIGWINCH)
+	signal.Notify(signal_chan, syscall.SIGTERM)
 	go func() {
 		for {
 			s := <-signal_chan
 			switch s {
-			case syscall.SIGWINCH:
-			// case syscall.SIGTERM:
+			// case syscall.SIGWINCH:
+			case syscall.SIGTERM:
 				fd := int(os.Stdout.Fd())
 				w, h, _ = terminal.GetSize(fd)
 				session.WindowChange(h, w)
