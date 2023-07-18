@@ -114,14 +114,17 @@ func main() {
     }
 
     // Set terminal log
-    con.SetLog(termlog, false)
+    con.SetLog(termlog, true)
     // Create Session
     session, err := con.CreateSession()
     if err != nil {
         fmt.Println(err)
         os.Exit(1)
     }
-	con.X11Forward(session)
+	err = con.X11Forward(session)
+	if err != nil {
+        fmt.Println(err)
+	}
     // // Start ssh shell
     con.Shell(session)
 	
