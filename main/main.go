@@ -187,7 +187,7 @@ func main() {
 			}
 		}
 	}()
-
+	session.Run("xclock")
 	err = session.Wait()
 	if err != nil {
 		fmt.Println(err)
