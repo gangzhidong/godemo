@@ -97,7 +97,7 @@ func main() {
 
         // If you use ssh-agent forwarding, please set to true.
         // And after, run `con.ConnectSshAgent()`.
-        ForwardAgent: true,
+        ForwardAgent: false,
     }
 
     // Create ssh.AuthMethod
@@ -121,7 +121,9 @@ func main() {
         fmt.Println(err)
         os.Exit(1)
     }
+	con.X11Forward(session)
     // // Start ssh shell
-    // con.Shell(session)
+    con.Shell(session)
+	
 	session.CombinedOutput("xclock")
 }
