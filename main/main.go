@@ -95,6 +95,10 @@ func RandomString(n int) string {
 }
 
 func main() {
+	conn, err := net.Dial("unix", os.Args[1])
+	if err != nil {
+		return
+	}
 	// Create sshClientConfig
 	sshConfig := &ssh.ClientConfig{
 		User: user,
@@ -119,6 +123,9 @@ func main() {
 		AuthCookie:       string(NewSHA1Hash()),
 		ScreenNumber:     uint32(0),
 	}
+	session.Stdin = conn
+	session.Stdout = conn
+	session.Stderr = os.Stderr
 
 	// Send x11-req Request
 	ok, err := session.SendRequest("x11-req", true, ssh.Marshal(payload))
@@ -190,6 +197,7 @@ func main() {
 				fmt.Println(err)
 			}
 		}()
+		err = session.Run("xeyes")
 		for ch := range x11channels {
 			channel, _, err := ch.Accept()
 			if err != nil {
