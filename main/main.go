@@ -6,46 +6,10 @@ import (
 	"net"
 	"os"
 
-	"golang.org/x/crypto/ssh"
-)
-
-var (
-	host     = "192.168.1.202"
-	port     = "22"
-	user     = "root"
-	pass     = "root"
-	password = "root"
-	termlog  = "./test_termlog"
-)
-
-Skip to content
- 
-Search…
-All gists
-Back to GitHub
-@gangzhidong 
-@blacknon
-blacknon/ssh_term_x11forwarding.go
-Last active 6 months ago • Report abuse
-Star this gist
-Code
-Revisions
-3
-<script src="https://gist.github.com/blacknon/9eca2e2b5462f71474e1101179847d2a.js"></script>
-goでx11フォワーディング付きでssh接続でシェルを利用する検証・サンプルコード(動く)
-ssh_term_x11forwarding.go
-// Test only on Mac
-
-package main
-
-import (
 	"crypto/sha1"
 	"errors"
-	"fmt"
 	"io"
 	"math/rand"
-	"net"
-	"os"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -56,13 +20,15 @@ import (
 )
 
 var (
-	host = "targethost"
-	port = "22"
-	user = "user"
-	pass = "password"
-
+	host     = "192.168.1.202"
+	port     = "22"
+	user     = "root"
+	pass     = "root"
+	password = "root"
+	termlog  = "./test_termlog"
 	characterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 )
+
 
 type x11request struct {
 	SingleConnection bool
