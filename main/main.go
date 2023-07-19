@@ -8,10 +8,8 @@ import (
 
 	"crypto/sha1"
 	"errors"
-	"io"
 	"math/rand"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
@@ -38,28 +36,32 @@ type x11request struct {
 }
 
 // forwardX11Socket ssh.Channel forward socket
-func forwardX11Socket(channel ssh.Channel) {
+func forwardX11Socket(channel ssh.Channel, session *ssh.Session) {
+	
 	conn, err := net.Dial("unix", os.Getenv("DISPLAY"))
 	if err != nil {
 		return
 	}
+	session.Stdin = conn
+	session.Stdout = conn
+	session.Stderr = os.Stderr
 
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		io.Copy(conn, channel)
-		conn.(*net.UnixConn).CloseWrite()
-		wg.Done()
-	}()
-	go func() {
-		io.Copy(channel, conn)
-		channel.CloseWrite()
-		wg.Done()
-	}()
+	// var wg sync.WaitGroup
+	// wg.Add(2)
+	// go func() {
+	// 	io.Copy(conn, channel)
+	// 	conn.(*net.UnixConn).CloseWrite()
+	// 	wg.Done()
+	// }()
+	// go func() {
+	// 	io.Copy(channel, conn)
+	// 	channel.CloseWrite()
+	// 	wg.Done()
+	// }()
 
-	wg.Wait()
-	conn.Close()
-	channel.Close()
+	// wg.Wait()
+	// conn.Close()
+	// channel.Close()
 }
 
 func init() {
@@ -134,7 +136,7 @@ func main() {
 					continue
 				}
 
-				go forwardX11Socket(channel)
+				go forwardX11Socket(channel,session)
 			}
 		}()
 	}
